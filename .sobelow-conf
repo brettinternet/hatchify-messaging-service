@@ -1,0 +1,14 @@
+[
+  verbose: true,
+  private: false,
+  skip: true,
+  router: "",
+  exit: "low",
+  format: "txt",
+  compact: true,
+  out: "",
+  threshold: "low",
+  ignore: ["Config.HTTPS"],
+  ignore_files: [],
+  quiet: true,
+]

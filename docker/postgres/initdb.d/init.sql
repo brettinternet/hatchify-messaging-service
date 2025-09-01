@@ -1,0 +1,2 @@
+CREATE DATABASE messaging_service;
+GRANT ALL PRIVILEGES ON DATABASE app TO postgres;

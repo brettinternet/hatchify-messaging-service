@@ -1,0 +1,98 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  PORT: 8080
+
+tasks:
+  init:
+    desc: Initialize
+    cmd:
+      task: setup
+
+  setup:
+    desc: Setup server
+    cmds:
+      - docker-compose pull
+      - task: compose:services
+      - mix setup
+
+  start:
+    desc: Start server
+    vars:
+      RELEASE_NAME:
+        sh: LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 10; echo
+      RELEASE_COOKIE: messaging
+    deps:
+      - compose:services
+    cmd: iex -S mix
+
+  kill:
+    desc: Kill server
+    cmd: lsof -t -i tcp:${SERVER_PORT:-{{.PORT}}} | xargs kill
+
+  check:
+    desc: Run checks
+    cmds:
+      - mix compile --warnings-as-errors
+      - mix dialyzer --quiet-with-result
+      - mix format --check-formatted
+      - mix credo --min-priority low
+      - mix sobelow --config .sobelow-conf --exit
+
+  fix:
+    desc: Fix server checks
+    cmd: mix format
+
+  test:
+    desc: Run server tests
+    cmd: mix test
+
+  clean:
+    desc: Clean the server
+    cmds:
+      - task: build:clean
+      - mix deps.clean --all
+
+  reset:
+    desc: Reset the server
+    cmds:
+      - rm -rf deps
+      - mix deps.get
+      - task: ecto:reset
+      - task: build:clean
+      - mix setup
+
+  build:clean:
+    desc: Build and reset the server
+    cmd: rm -rf _build
+
+  ecto:reset:
+    desc: Run server tests
+    cmds:
+      - mix ecto.reset
+      - MIX_ENV=test mix ecto.reset
+
+  compose:build:
+    desc: Build Docker Compose server
+    cmd: docker-compose --profile server build
+
+  compose:up:
+    aliases: [compose:start, compose:run]
+    desc: Run Docker Compose server
+    cmd: docker-compose --profile server up -d --force-recreate{{if .CLI_FORCE}} --build{{end}}
+
+  compose:down:
+    desc: Down Docker Compose server
+    cmd: docker-compose --profile server down
+
+  compose:services:
+    aliases: [compose:services:up]
+    desc: Start services
+    cmd: docker-compose --profile services up -d{{if .CLI_FORCE}} --force-recreate{{end}}
+
+  compose:services:down:
+    desc: Start services
+    cmds:
+      - docker-compose --profile services down

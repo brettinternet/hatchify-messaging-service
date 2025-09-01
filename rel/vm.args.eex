@@ -1,0 +1,25 @@
+## Number of dirty schedulers doing IO work (file, sockets, and others)
+## Each of these is a new thread, but the threads are likely IO bound
+## so we may benefit from having more of these if we have problems
+## keeping up with the large number of web sockets/channels.
++SDio 15
+
+## Increases number of concurrent ports/sockets per node
++Q 262144
++P 262144
+
+## Disable cpu waits: https://stressgrid.com/blog/beam_cpu_usage/
++sbwt none
++sbwtdcpu none
++sbwtdio none
+
+## Tweak GC to run more often
+##-env ERL_FULLSWEEP_AFTER 10
+
+## Configure Erlang distribution port for clustering
+## This allows external nodes to connect predictably
+-kernel inet_dist_listen_min 45892
+-kernel inet_dist_listen_max 45892
+
+## Customize flags given to the VM: http://erlang.org/doc/man/erl.html
+## -mode/-name/-sname/-setcookie are configured via env vars, do not set them here

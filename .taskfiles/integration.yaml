@@ -1,0 +1,43 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  PORT: 3000
+
+tasks:
+  init:
+    desc: Initialize
+    cmd:
+      task: setup
+
+  setup:
+    desc: Setup server
+    cmds:
+      - go mod download
+
+  start:
+    desc: Start
+    dir: "{{.MAIN_DIR}}"
+    cmd: air
+
+  run:
+    desc: Runs server commands with arguments
+    dir: "{{.MAIN_DIR}}"
+    cmd: go run ./main.go {{.COMMAND | default .CLI_ARGS}}
+
+  check:
+    desc: Run checks
+    cmds:
+      - golangci-lint run --timeout 5m
+      - go mod verify
+
+  fix:
+    desc: Fix checks
+    cmds:
+      - go mod tidy
+      - golangci-lint run --fix --timeout 5m
+
+  test:
+    desc: Run tests
+    cmd: gotestsum --format testname --hide-summary=output
