@@ -12,12 +12,14 @@ defmodule Messaging.Application do
       Messaging.RateLimit.Supervisor,
       Messaging.Repo,
       {Bandit, plug: MessagingWeb.Router, scheme: :http, port: Messaging.server_port()},
-      {Task.Supervisor, name: Messaging.TaskSupervisor}
+      {Task.Supervisor, name: Messaging.TaskSupervisor},
+      {Messaging.OutboxProcessor, Messaging.config_env() != :test}
     ]
 
     opts = [strategy: :one_for_one, name: Messaging.Supervisor]
 
     children
+    # Conditional children
     |> Enum.map(fn
       {child, true} -> child
       {_child, false} -> nil

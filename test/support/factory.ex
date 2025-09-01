@@ -8,9 +8,9 @@ defmodule Messaging.Factory do
       use ExMachina.Ecto, repo: Messaging.Repo
 
       alias Messaging.Clients.Client
-      alias Messaging.Conversation
-      alias Messaging.Message
-      alias Messaging.Participant
+      alias Messaging.Conversations.Conversation
+      alias Messaging.Conversations.Message
+      alias Messaging.Conversations.Participant
       alias Messaging.Sessions.Session
 
       @spec conversation_factory(map()) :: Conversation.t()
@@ -44,7 +44,7 @@ defmodule Messaging.Factory do
       def participant_factory(attrs) do
         %Participant{
           conversation_id: generate_uxid(),
-          participant_address: "+15551234567"
+          address: "+15551234567"
         }
         |> merge_attributes(attrs)
         |> evaluate_lazy_attributes()

@@ -9,20 +9,21 @@ defmodule Messaging.Conversations.Participant do
   import Ecto.Changeset
 
   alias Messaging.Conversations.Conversation
+  alias Messaging.Conversations.Message
 
   @type t :: %__MODULE__{
-          id: String.t(),
           conversation_id: String.t(),
-          participant_address: String.t(),
+          address: String.t(),
           conversation: Conversation.t() | Ecto.Association.NotLoaded.t(),
           inserted_at: NaiveDateTime.t()
         }
 
-  schema "participant" do
-    field :conversation_id, :string
-    field :participant_address, :string
+  @primary_key false
 
-    belongs_to :conversation, Conversation, define_field: false, references: :id
+  schema "participant" do
+    field :address, :string
+
+    belongs_to :conversation, Conversation, references: :id
 
     timestamps(updated_at: false)
   end
@@ -30,10 +31,10 @@ defmodule Messaging.Conversations.Participant do
   @doc false
   def changeset(participant, attrs) do
     participant
-    |> cast(attrs, [:conversation_id, :participant_address])
-    |> validate_required([:conversation_id, :participant_address])
-    |> validate_participant_address()
-    |> unique_constraint([:conversation_id, :participant_address])
+    |> cast(attrs, [:conversation_id, :address])
+    |> validate_required([:conversation_id, :address])
+    |> validate_address()
+    |> unique_constraint([:conversation_id, :address])
   end
 
   @doc """
@@ -43,7 +44,7 @@ defmodule Messaging.Conversations.Participant do
     Enum.map(addresses, fn address ->
       changeset(%__MODULE__{}, %{
         conversation_id: conversation_id,
-        participant_address: address
+        address: address
       })
     end)
   end
@@ -51,12 +52,13 @@ defmodule Messaging.Conversations.Participant do
   @doc """
   Extracts participant addresses from a message (from + to).
   """
+  @spec addresses_from_message(Message.t()) :: [String.t()]
   def addresses_from_message(%{from_address: from, to_address: to}) do
     [from, to] |> Enum.uniq() |> Enum.sort()
   end
 
-  defp validate_participant_address(changeset) do
-    case get_change(changeset, :participant_address) do
+  defp validate_address(changeset) do
+    case get_change(changeset, :address) do
       nil ->
         changeset
 
@@ -64,11 +66,11 @@ defmodule Messaging.Conversations.Participant do
         if valid_address?(address) do
           changeset
         else
-          add_error(changeset, :participant_address, "must be a valid phone number or email")
+          add_error(changeset, :address, "must be a valid phone number or email")
         end
 
       _ ->
-        add_error(changeset, :participant_address, "must be a non-empty string")
+        add_error(changeset, :address, "must be a non-empty string")
     end
   end
 

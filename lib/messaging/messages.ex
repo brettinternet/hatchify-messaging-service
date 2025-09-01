@@ -69,13 +69,21 @@ defmodule Messaging.Messages do
     }
   end
 
-  # Extract 'from' field (already validated as string in controller)
-  defp get_from_address(%{"from" => from}) when is_binary(from), do: from
+  # Extract 'from' field
+  defp get_from_address(%{"from" => from}) when is_binary(from), do: extract_email_from_markdown(from)
   defp get_from_address(_), do: nil
 
   # Extract 'to' field
-  defp get_to_address(%{"to" => to}) when is_binary(to), do: to
+  defp get_to_address(%{"to" => to}) when is_binary(to), do: extract_email_from_markdown(to)
   defp get_to_address(_), do: nil
+
+  # Extract email from formatted or return as-is
+  defp extract_email_from_markdown(value) do
+    case Regex.run(~r/\[(.+?)\]\(mailto:(.+?)\)/, value) do
+      [_full, _display, email] -> email
+      nil -> value
+    end
+  end
 
   # Determine message type based on payload
   defp get_message_type(%{"type" => type}) when type in ["sms", "mms"], do: type

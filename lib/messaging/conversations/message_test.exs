@@ -287,7 +287,7 @@ defmodule Messaging.Conversations.MessageTest do
       normal_url = "https://example.com/file.jpg"
       attrs = Map.put(@valid_attrs, :attachments, [normal_url])
       changeset = Message.changeset(%Message{}, attrs)
-      
+
       assert changeset.valid?
     end
 
@@ -295,10 +295,10 @@ defmodule Messaging.Conversations.MessageTest do
       # Create a URL longer than 2048 characters
       long_path = String.duplicate("very-long-path-segment/", 100)
       long_url = "https://example.com/#{long_path}file.jpg"
-      
+
       attrs = Map.put(@valid_attrs, :attachments, [long_url])
       changeset = Message.changeset(%Message{}, attrs)
-      
+
       refute changeset.valid?
       assert %{attachments: ["contains invalid or overly long URLs"]} = errors_on(changeset)
     end
@@ -307,16 +307,17 @@ defmodule Messaging.Conversations.MessageTest do
       # Ecto's {:array, :string} type filters out empty strings automatically
       attrs = Map.put(@valid_attrs, :attachments, ["", "https://example.com/valid.jpg", ""])
       changeset = Message.changeset(%Message{}, attrs)
-      
+
       assert changeset.valid?
       # Empty strings should be filtered out, leaving only the valid URL
       assert Ecto.Changeset.get_field(changeset, :attachments) == ["https://example.com/valid.jpg"]
     end
 
     test "rejects very short attachment URLs" do
-      attrs = Map.put(@valid_attrs, :attachments, ["x.y"])  # Only 3 characters
+      # Only 3 characters
+      attrs = Map.put(@valid_attrs, :attachments, ["x.y"])
       changeset = Message.changeset(%Message{}, attrs)
-      
+
       refute changeset.valid?
       assert %{attachments: ["contains invalid or overly long URLs"]} = errors_on(changeset)
     end
@@ -326,7 +327,7 @@ defmodule Messaging.Conversations.MessageTest do
       mixed_urls = ["https://example.com/valid.jpg", String.duplicate("x", 2049)]
       attrs = Map.put(@valid_attrs, :attachments, mixed_urls)
       changeset = Message.changeset(%Message{}, attrs)
-      
+
       refute changeset.valid?
       assert %{attachments: ["contains invalid or overly long URLs"]} = errors_on(changeset)
     end

@@ -1,7 +1,7 @@
 defmodule Messaging.Schema do
   @moduledoc false
   defmacro __using__(opts) do
-    prefix = Keyword.get(opts, :prefix, "usr")
+    prefix = Keyword.get(opts, :prefix)
 
     quote do
       use Ecto.Schema

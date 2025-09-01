@@ -5,7 +5,7 @@ defmodule Messaging.Repo.Migrations.Message do
   def change do
     create table(:message, primary_key: false) do
       add :id, :text, primary_key: true
-      add :conversation_id, :text, null: false
+      add :conversation_id, references(:conversation, type: :text), null: false
       add :from_address, :text, null: false
       add :to_address, :text, null: false
       add :message_type, :text, null: false
@@ -14,7 +14,7 @@ defmodule Messaging.Repo.Migrations.Message do
       add :attachments, {:array, :text}
       add :provider_id, :text
       add :direction, :text, null: false
-      add :timestamp, :utc_datetime, null: false
+      add :timestamp, :utc_datetime_usec, null: false
 
       timestamps(updated_at: false)
     end

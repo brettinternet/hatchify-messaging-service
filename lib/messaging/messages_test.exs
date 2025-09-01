@@ -53,8 +53,8 @@ defmodule Messaging.MessagesTest do
 
     test "validates email message" do
       payload = %{
-        "from" => "user@example.com",
-        "to" => "contact@example.com",
+        "from" => "[user@example.com](mailto:user@example.com)",
+        "to" => "[Display Name](mailto:contact@example.com)",
         "body" => "Email body",
         "xillio_id" => "email-456",
         "timestamp" => "2024-11-01T14:00:00Z"
@@ -62,6 +62,8 @@ defmodule Messaging.MessagesTest do
 
       {:ok, message} = Messages.validate_message(payload)
 
+      assert message.from_address == "user@example.com"
+      assert message.to_address == "contact@example.com"
       assert message.message_type == "email"
       assert message.direction == "inbound"
       assert message.provider_id == "email-456"

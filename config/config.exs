@@ -1,7 +1,5 @@
 import Config
 
-alias Tesla.Adapter.Finch
-
 config :hammer,
   backend: {Hammer.Backend.ETS, [expiry_ms: to_timeout(second: 240), cleanup_interval_ms: to_timeout(second: 120)]}
 
@@ -23,8 +21,6 @@ config :messaging, :port, 4003
 
 config :messaging,
   ecto_repos: [Messaging.Repo],
-  generators: [timestamp_type: :utc_datetime, binary_id: true]
-
-config :tesla, :adapter, {Finch, name: Messaging.Finch}
+  generators: [timestamp_type: :utc_datetime_usec, binary_id: true]
 
 import_config "#{config_env()}.exs"

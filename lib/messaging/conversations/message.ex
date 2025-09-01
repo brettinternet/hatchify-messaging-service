@@ -9,6 +9,7 @@ defmodule Messaging.Conversations.Message do
   import Ecto.Changeset
 
   alias Messaging.Conversations.Conversation
+  alias Messaging.Conversations.OutboxEvent
 
   @type t :: %__MODULE__{
           id: String.t(),
@@ -29,7 +30,6 @@ defmodule Messaging.Conversations.Message do
   @directions ~w(inbound outbound)
 
   schema "message" do
-    field :conversation_id, :string
     field :from_address, :string
     field :to_address, :string
     field :message_type, :string
@@ -37,14 +37,16 @@ defmodule Messaging.Conversations.Message do
     field :attachments, {:array, :string}
     field :provider_id, :string
     field :direction, :string
-    field :timestamp, :utc_datetime
+    field :timestamp, :utc_datetime_usec
 
-    belongs_to :conversation, Conversation, define_field: false, references: :id
+    belongs_to :conversation, Conversation, references: :id
+    has_one :outbox_event, OutboxEvent, foreign_key: :message_id, references: :id
 
     timestamps(updated_at: false)
   end
 
   @doc false
+  @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(message, attrs) do
     message
     |> cast(attrs, [

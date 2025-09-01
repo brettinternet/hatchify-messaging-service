@@ -1,15 +1,7 @@
 defmodule MessagingWeb.Controllers.Message do
   @moduledoc """
-  Handle incoming messages.
-
-  When a new message arrives:
-   1. Extract participant set from from and to addresses
-   2. Query for existing conversation with exactly those participants
-   3. If found, add message to that conversation
-   4. If not found, create new conversation and add participants
+  Handle messages - create and list.
   """
-
-  use Plug.Builder
 
   import Plug.Conn
 
@@ -19,24 +11,28 @@ defmodule MessagingWeb.Controllers.Message do
 
   require Logger
 
-  plug Plug.Parsers,
-    parsers: [:urlencoded, :json],
-    pass: ["text/*"],
-    body_reader: {__MODULE__, :read_body, []},
-    json_decoder: Jason,
-    length: 1_000_000,
-    read_length: 1_000_000,
-    read_timeout: 15_000
-
+  @doc """
+  List messages from a conversation.
+  """
   @spec list(Plug.Conn.t()) :: Plug.Conn.t()
   def list(%Plug.Conn{} = conn) do
     send_resp(conn, 200, "Listing messages is not implemented yet")
   end
 
+  @doc """
+  Create a new message.
+
+  When a new message arrives:
+    1. Extract participant set from from and to addresses
+    2. Query for existing conversation with exactly those participants
+    3. If found, add message to that conversation
+    4. If not found, create new conversation and add participants
+  """
   @spec create(Plug.Conn.t()) :: Plug.Conn.t()
   def create(%Plug.Conn{} = conn) do
-    with :ok <- RateLimit.message(conn.assigns[:from]),
-         {:ok, validated_message} <- Messages.validate_message(conn.assigns[:parsed_body]),
+    with {:ok, body} <- get_body(conn),
+         :ok <- RateLimit.message(body["from"]),
+         {:ok, validated_message} <- Messages.validate_message(body),
          :ok <- Conversations.handle_message(validated_message) do
       send_resp(conn, 204, "")
     else
@@ -53,38 +49,25 @@ defmodule MessagingWeb.Controllers.Message do
 
       {:error, :invalid_message} ->
         send_resp(conn, 400, "Invalid message format")
-
-        # {:error, :internal_error} ->
-        #   send_resp(conn, 500, "Internal server error")
     end
   end
 
-  @spec read_body(Plug.Conn.t(), keyword()) :: {:ok, binary(), Plug.Conn.t()}
-  def read_body(conn, opts) do
-    {:ok, body, conn} = Plug.Conn.read_body(conn, opts)
-    conn = extract_sender(conn, body)
-    {:ok, body, conn}
-  end
+  @spec get_body(Plug.Conn.t()) :: {:ok, map()} | {:error, :invalid_message}
+  def get_body(conn) do
+    case conn.body_params do
+      %{"from" => from} = params when is_map(params) and is_binary(from) ->
+        {:ok, params}
 
-  @spec extract_sender(Plug.Conn.t(), binary() | nil) :: Plug.Conn.t()
-  defp extract_sender(conn, body) when is_binary(body) and byte_size(body) <= 1_000_000 do
-    case Jason.decode(body) do
-      {:ok, %{"from" => from} = parsed_body} when is_binary(from) ->
-        conn
-        |> put_in([Access.key(:assigns), :from], from)
-        |> put_in([Access.key(:assigns), :parsed_body], parsed_body)
+      nil ->
+        {:error, :missing_body}
 
-      {:ok, json} ->
-        Logger.debug("Missing 'from' field in JSON: #{inspect(json)}")
-        put_in(conn.assigns[:from], nil)
+      %{"from" => nil} = body ->
+        Logger.debug("Missing 'from' field in JSON: #{inspect(body)}")
+        {:error, :invalid_message}
 
-      {:error, reason} ->
-        Logger.warning("Failed to decode JSON body: #{inspect(reason)}")
-        put_in(conn.assigns[:from], nil)
+      body ->
+        Logger.debug("Invalid body: #{inspect(body)}")
+        {:error, :invalid_message}
     end
-  end
-
-  defp extract_sender(conn, _body) do
-    put_in(conn.assigns[:from], nil)
   end
 end
