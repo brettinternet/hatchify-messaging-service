@@ -8,10 +8,10 @@ defmodule MessagingWeb.Controllers.Twilio do
 
   import Plug.Conn
 
-  require Logger
-
   alias Messaging.Conversations
   alias Messaging.Conversations.Message
+
+  require Logger
 
   @doc """
   Handle incoming SMS/MMS webhook from providers like Twilio.
@@ -37,27 +37,7 @@ defmodule MessagingWeb.Controllers.Twilio do
 
         Logger.info("Processing inbound #{message_type} webhook from #{from} to #{to}")
 
-        case create_message_struct(message_attrs) do
-          {:ok, message} ->
-            case Conversations.handle_message(message) do
-              :ok ->
-                conn
-                |> put_resp_header("content-type", "application/json")
-                |> send_resp(200, Jason.encode!(%{"status" => "message_processed"}))
-
-              {:error, changeset} ->
-                Logger.error("Failed to process message: #{inspect(changeset)}")
-                conn
-                |> put_resp_header("content-type", "application/json")
-                |> send_resp(422, Jason.encode!(%{"error" => "Message processing failed"}))
-            end
-
-          {:error, reason} ->
-            Logger.error("Invalid message format: #{inspect(reason)}")
-            conn
-            |> put_resp_header("content-type", "application/json")
-            |> send_resp(400, Jason.encode!(%{"error" => "Invalid message format"}))
-        end
+        process_webhook_message(conn, message_attrs)
 
       _ ->
         conn
@@ -89,32 +69,44 @@ defmodule MessagingWeb.Controllers.Twilio do
 
         Logger.info("Processing inbound email webhook from #{from} to #{to}")
 
-        case create_message_struct(message_attrs) do
-          {:ok, message} ->
-            case Conversations.handle_message(message) do
-              :ok ->
-                conn
-                |> put_resp_header("content-type", "application/json")
-                |> send_resp(200, Jason.encode!(%{"status" => "message_processed"}))
-
-              {:error, changeset} ->
-                Logger.error("Failed to process message: #{inspect(changeset)}")
-                conn
-                |> put_resp_header("content-type", "application/json")
-                |> send_resp(422, Jason.encode!(%{"error" => "Message processing failed"}))
-            end
-
-          {:error, reason} ->
-            Logger.error("Invalid message format: #{inspect(reason)}")
-            conn
-            |> put_resp_header("content-type", "application/json")
-            |> send_resp(400, Jason.encode!(%{"error" => "Invalid message format"}))
-        end
+        process_webhook_message(conn, message_attrs)
 
       _ ->
         conn
         |> put_resp_header("content-type", "application/json")
         |> send_resp(400, Jason.encode!(%{"error" => "Invalid webhook format"}))
+    end
+  end
+
+  # Process webhook message by creating and handling the message
+  defp process_webhook_message(conn, message_attrs) do
+    case create_message_struct(message_attrs) do
+      {:ok, message} ->
+        handle_message_processing(conn, message)
+
+      {:error, reason} ->
+        Logger.error("Invalid message format: #{inspect(reason)}")
+
+        conn
+        |> put_resp_header("content-type", "application/json")
+        |> send_resp(400, Jason.encode!(%{"error" => "Invalid message format"}))
+    end
+  end
+
+  # Handle the actual message processing
+  defp handle_message_processing(conn, message) do
+    case Conversations.handle_message(message) do
+      :ok ->
+        conn
+        |> put_resp_header("content-type", "application/json")
+        |> send_resp(200, Jason.encode!(%{"status" => "message_processed"}))
+
+      {:error, changeset} ->
+        Logger.error("Failed to process message: #{inspect(changeset)}")
+
+        conn
+        |> put_resp_header("content-type", "application/json")
+        |> send_resp(422, Jason.encode!(%{"error" => "Message processing failed"}))
     end
   end
 
@@ -124,7 +116,7 @@ defmodule MessagingWeb.Controllers.Twilio do
     case validate_webhook_attrs(attrs) do
       :ok ->
         {:ok, struct(Message, attrs)}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -133,7 +125,7 @@ defmodule MessagingWeb.Controllers.Twilio do
   # Validate required webhook attributes
   defp validate_webhook_attrs(attrs) do
     required_fields = [:from_address, :to_address, :message_type, :body, :direction, :timestamp]
-    
+
     case Enum.find(required_fields, fn field -> is_nil(Map.get(attrs, field)) end) do
       nil -> :ok
       _missing_field -> {:error, :invalid_message}
@@ -142,14 +134,18 @@ defmodule MessagingWeb.Controllers.Twilio do
 
   # Parse timestamp from webhook, fallback to current time
   defp parse_timestamp(nil), do: DateTime.utc_now()
+
   defp parse_timestamp(timestamp_str) when is_binary(timestamp_str) do
     case DateTime.from_iso8601(timestamp_str) do
-      {:ok, datetime, _offset} -> 
+      {:ok, datetime, _offset} ->
         # Ensure microsecond precision for database compatibility
         %{datetime | microsecond: {elem(datetime.microsecond, 0), 6}}
-      {:error, _} -> DateTime.utc_now()
+
+      {:error, _} ->
+        DateTime.utc_now()
     end
   end
+
   defp parse_timestamp(_), do: DateTime.utc_now()
 
   # Normalize attachments to list format

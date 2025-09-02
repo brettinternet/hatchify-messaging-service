@@ -1,9 +1,9 @@
 defmodule MessagingWeb.Controllers.MessageTest do
   use Messaging.DataCase
   use Mimic
-  
-  import Plug.Test
+
   import Plug.Conn
+  import Plug.Test
 
   alias Messaging.Conversations
   alias Messaging.Conversations.Conversation
@@ -20,7 +20,8 @@ defmodule MessagingWeb.Controllers.MessageTest do
 
   # Helper function to create a mock Plug.Conn
   defp mock_conn(body_params \\ %{}, query_params \\ %{}) do
-    conn(:post, "/", "")
+    :post
+    |> conn("/", "")
     |> Map.put(:body_params, body_params)
     |> Map.put(:query_params, query_params)
   end
@@ -178,7 +179,7 @@ defmodule MessagingWeb.Controllers.MessageTest do
       # Copy modules for mocking
       copy(RateLimit)
       copy(Messages)
-      
+
       # Default stub for rate limiting - allow by default
       stub(RateLimit, :message, fn _from -> :ok end)
       :ok
@@ -224,7 +225,7 @@ defmodule MessagingWeb.Controllers.MessageTest do
       result_conn = MessageController.create(conn)
 
       assert {400, "Missing request body"} = get_response(result_conn)
-      
+
       # Verify nothing was created
       assert Repo.aggregate(Conversation, :count) == 0
       assert Repo.aggregate(Message, :count) == 0
@@ -273,11 +274,13 @@ defmodule MessagingWeb.Controllers.MessageTest do
       result_conn = MessageController.create(conn)
 
       assert {429, "Rate limit exceeded"} = get_response(result_conn)
-      
+
       # Check that retry-after header is set
-      retry_after_header = Enum.find(result_conn.resp_headers, fn {key, _value} -> 
-        key == "retry-after" 
-      end)
+      retry_after_header =
+        Enum.find(result_conn.resp_headers, fn {key, _value} ->
+          key == "retry-after"
+        end)
+
       assert {"retry-after", "60"} = retry_after_header
 
       # Verify nothing was created due to rate limiting
@@ -299,7 +302,7 @@ defmodule MessagingWeb.Controllers.MessageTest do
       result_conn = MessageController.create(conn)
 
       assert {400, "Invalid message format"} = get_response(result_conn)
-      
+
       # Verify nothing was created
       assert Repo.aggregate(Message, :count) == 0
     end
@@ -471,7 +474,7 @@ defmodule MessagingWeb.Controllers.MessageTest do
 
       # Verify participants were created
       participants = Repo.all(Participant)
-      participant_addresses = Enum.map(participants, & &1.address) |> Enum.sort()
+      participant_addresses = participants |> Enum.map(& &1.address) |> Enum.sort()
       assert participant_addresses == ["+7777777777", "+8888888888"]
 
       # Verify all participants belong to the same conversation
@@ -490,7 +493,8 @@ defmodule MessagingWeb.Controllers.MessageTest do
     test "handles conversation creation failure gracefully" do
       valid_message = %Message{
         id: "msg_failure_test",
-        from_address: "",  # This will cause validation failure
+        # This will cause validation failure
+        from_address: "",
         to_address: "+8888888888",
         message_type: "sms",
         body: "Failure test message",
@@ -509,7 +513,7 @@ defmodule MessagingWeb.Controllers.MessageTest do
       }
 
       conn = mock_conn(body_params)
-      
+
       # The validation failure causes the with clause to not match, so it raises an error
       assert_raise WithClauseError, fn ->
         MessageController.create(conn)
@@ -530,36 +534,36 @@ defmodule MessagingWeb.Controllers.MessageTest do
         "to" => "+0987654321",
         "body" => "Test message"
       }
-      
+
       conn = mock_conn(body_params)
-      
+
       assert {:ok, result} = MessageController.get_body(conn)
       assert result == body_params
     end
 
     test "returns error when body_params is nil" do
       conn = mock_conn(nil)
-      
+
       assert {:error, :missing_body} = MessageController.get_body(conn)
     end
 
     test "returns error when from field is nil" do
       body_params = %{"from" => nil, "body" => "Test"}
       conn = mock_conn(body_params)
-      
+
       assert {:error, :invalid_message} = MessageController.get_body(conn)
     end
 
     test "returns error when from field is missing" do
       body_params = %{"body" => "Test message"}
       conn = mock_conn(body_params)
-      
+
       assert {:error, :invalid_message} = MessageController.get_body(conn)
     end
 
     test "returns error when body_params is not a map" do
       conn = %Plug.Conn{body_params: "invalid"}
-      
+
       assert {:error, :invalid_message} = MessageController.get_body(conn)
     end
 
@@ -571,9 +575,9 @@ defmodule MessagingWeb.Controllers.MessageTest do
         "body" => "Test message",
         "extra_field" => "extra_value"
       }
-      
+
       conn = mock_conn(body_params)
-      
+
       assert {:ok, result} = MessageController.get_body(conn)
       assert result == body_params
     end

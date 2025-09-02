@@ -4,14 +4,14 @@ This is a scaffold for Hatch's backend interview project. It includes basic setu
 
 ## Guidelines
 
-At Hatch, we work with several message providers to offer a unified way for our Customers to  communicate to their Contacts. Today we offer SMS, MMS, email, voice calls, and voicemail drops. Your task is to implement an HTTP service that supports the core messaging functionality of Hatch, on a much smaller scale. Specific instructions and guidelines on completing the project are below.
+At Hatch, we work with several message providers to offer a unified way for our Customers to communicate to their Contacts. Today we offer SMS, MMS, email, voice calls, and voicemail drops. Your task is to implement an HTTP service that supports the core messaging functionality of Hatch, on a much smaller scale. Specific instructions and guidelines on completing the project are below.
 
 ### General Guidelines
 
-- You may use whatever programming language, libraries, or frameworks you'd like. 
+- You may use whatever programming language, libraries, or frameworks you'd like.
 - We strongly encourage you to use whatever you're most familiar with so that you can showcase your skills and know-how. Candidates will not receive any kind of 'bonus points' or 'red flags' regarding their specific choices of language.
 - You are welcome to use AI, Google, StackOverflow, etc as resources while you're developing. We just ask that you understand the code very well, because we will continue developing on it during your onsite interview.
-- For ease of assessment, we strongly encourage you to use the `start.sh` script provided in the `bin/` directory, and implement it to run your service. We will run this script to start your project during our assessment. 
+- For ease of assessment, we strongly encourage you to use the `start.sh` script provided in the `bin/` directory, and implement it to run your service. We will run this script to start your project during our assessment.
 
 ### Project-specific guidelines
 
@@ -50,13 +50,13 @@ The service should implement:
 
 ```json
 {
-    "from": "+18045551234",
-    "to": "+12016661234",
-    "type": "sms",
-    "messaging_provider_id": "message-1",
-    "body": "text message",
-    "attachments": null,
-    "timestamp": "2024-11-01T14:00:00Z" // UTC timestamp
+  "from": "+18045551234",
+  "to": "+12016661234",
+  "type": "sms",
+  "messaging_provider_id": "message-1",
+  "body": "text message",
+  "attachments": null,
+  "timestamp": "2024-11-01T14:00:00Z" // UTC timestamp
 }
 ```
 
@@ -102,7 +102,7 @@ The service should implement:
 
 ### Project Structure
 
-This project structure is laid out for you already. You are welcome to move or change things, just update the Makefile, scripts, and/or docker resources accordingly. As part of the evaluation of your code, we will run 
+This project structure is laid out for you already. You are welcome to move or change things, just update the Makefile, scripts, and/or docker resources accordingly. As part of the evaluation of your code, we will run
 
 ```
 .
@@ -132,6 +132,7 @@ This project structure is laid out for you already. You are welcome to move or c
 ## Database
 
 The application uses PostgreSQL as its database. The docker-compose.yml file sets up:
+
 - PostgreSQL 15 with Alpine Linux
 - Database: `messaging_service`
 - User: `messaging_user`
@@ -139,6 +140,7 @@ The application uses PostgreSQL as its database. The docker-compose.yml file set
 - Port: `5432` (exposed to host)
 
 To connect to the database directly:
+
 ```bash
 docker-compose exec postgres psql -U messaging_user -d messaging_service
 ```

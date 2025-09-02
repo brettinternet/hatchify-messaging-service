@@ -25,7 +25,7 @@ defmodule Messaging.Messages do
     case validate_required_fields(attrs) do
       :ok ->
         {:ok, struct(Message, attrs)}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -37,7 +37,7 @@ defmodule Messaging.Messages do
   # Validate required fields manually
   defp validate_required_fields(attrs) do
     required_fields = [:from_address, :to_address, :message_type, :body, :direction, :timestamp]
-    
+
     case Enum.find(required_fields, fn field -> is_nil(Map.get(attrs, field)) end) do
       nil -> :ok
       _missing_field -> {:error, :invalid_message}
@@ -106,18 +106,7 @@ defmodule Messaging.Messages do
 
       # No timezone - only accept strict ISO 8601 format with 'T' separator
       {:error, :missing_offset} ->
-        if String.contains?(timestamp, "T") do
-          case NaiveDateTime.from_iso8601(timestamp) do
-            {:ok, naive_dt} ->
-              DateTime.from_naive!(naive_dt, "Etc/UTC")
-
-            {:error, _} ->
-              DateTime.utc_now()
-          end
-        else
-          # Reject space-separated datetime format
-          DateTime.utc_now()
-        end
+        parse_naive_datetime(timestamp)
 
       # Invalid format - fall back to current time
       {:error, _reason} ->
@@ -126,4 +115,20 @@ defmodule Messaging.Messages do
   end
 
   defp parse_timestamp(_), do: DateTime.utc_now()
+
+  # Parse naive datetime with timezone handling
+  defp parse_naive_datetime(timestamp) do
+    if String.contains?(timestamp, "T") do
+      case NaiveDateTime.from_iso8601(timestamp) do
+        {:ok, naive_dt} ->
+          DateTime.from_naive!(naive_dt, "Etc/UTC")
+
+        {:error, _} ->
+          DateTime.utc_now()
+      end
+    else
+      # Reject space-separated datetime format
+      DateTime.utc_now()
+    end
+  end
 end

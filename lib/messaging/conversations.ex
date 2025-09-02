@@ -174,23 +174,28 @@ defmodule Messaging.Conversations do
   defp create_conversation_with_participants(repo, addresses) do
     case repo.insert(Conversation.changeset(%Conversation{}, %{})) do
       {:ok, conversation} ->
-        participant_changesets = Participant.create_for_conversation(conversation.id, addresses)
-
-        result =
-          Enum.reduce_while(participant_changesets, [], fn changeset, acc ->
-            case repo.insert(changeset) do
-              {:ok, participant} -> {:cont, [participant | acc]}
-              {:error, reason} -> {:halt, {:error, reason}}
-            end
-          end)
-
-        case result do
-          {:error, reason} -> {:error, reason}
-          _participants -> {:ok, conversation}
-        end
+        create_participants_for_conversation(repo, conversation, addresses)
 
       {:error, reason} ->
         {:error, reason}
+    end
+  end
+
+  # Create participants for a conversation
+  defp create_participants_for_conversation(repo, conversation, addresses) do
+    participant_changesets = Participant.create_for_conversation(conversation.id, addresses)
+
+    result =
+      Enum.reduce_while(participant_changesets, [], fn changeset, acc ->
+        case repo.insert(changeset) do
+          {:ok, participant} -> {:cont, [participant | acc]}
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+      end)
+
+    case result do
+      {:error, reason} -> {:error, reason}
+      _participants -> {:ok, conversation}
     end
   end
 end

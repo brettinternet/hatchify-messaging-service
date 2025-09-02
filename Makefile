@@ -16,7 +16,7 @@ help:
 setup:
 	@echo "Setting up the project..."
 	@echo "Starting PostgreSQL database..."
-	@docker-compose up -d
+	@docker-compose --profile services up -d
 	@echo "Waiting for database to be ready..."
 	@sleep 5
 	@echo "Setup complete!"
@@ -33,7 +33,7 @@ kill:
 test:
 	@echo "Running tests..."
 	@echo "Starting test database if not running..."
-	@docker-compose up -d
+	@docker-compose --profile services up -d
 	@echo "Running test script..."
 	@./bin/test.sh
 
@@ -46,15 +46,15 @@ clean:
 
 db-up:
 	@echo "Starting PostgreSQL database..."
-	@docker-compose up -d
+	@docker-compose --profile services up -d
 
 db-down:
 	@echo "Stopping PostgreSQL database..."
-	@docker-compose down
+	@docker-compose --profile services down
 
 db-logs:
 	@echo "Showing database logs..."
-	@docker-compose logs -f postgres
+	@docker-compose --profile services logs -f postgres
 
 db-shell:
 	@echo "Connecting to database shell..."
