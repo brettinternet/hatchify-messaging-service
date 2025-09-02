@@ -65,6 +65,8 @@ clean: kill
 	@docker-compose --profile db down -v
 	@echo "Removing any temporary files..."
 	@rm -rf *.log *.tmp
+	@echo "Removing build and dependency artifacts..."
+	@rm -rf docker/data _build .elixir_ls deps .elixir-tools
 
 db-up:
 	@echo "Starting PostgreSQL database..."

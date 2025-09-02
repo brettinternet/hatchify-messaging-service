@@ -79,7 +79,6 @@ tasks:
     cmd: docker-compose --profile server build
 
   compose:up:
-    aliases: [compose:start, compose:run]
     desc: Run Docker Compose server
     cmd: docker-compose --profile server up -d --force-recreate{{if .CLI_FORCE}} --build{{end}}
 
@@ -95,6 +94,7 @@ tasks:
     cmd: docker-compose --profile services up -d{{if .CLI_FORCE}} --force-recreate{{end}}
 
   compose:db:
+    aliases: [compose:db:up]
     desc: Start database
     cmd: docker-compose --profile db up -d{{if .CLI_FORCE}} --force-recreate{{end}}
 

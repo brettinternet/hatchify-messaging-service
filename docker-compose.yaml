@@ -88,7 +88,7 @@ services:
       - ./docker/postgres/initdb.d:/docker-entrypoint-initdb.d
       - ./docker/data/postgres:/var/lib/postgresql/data
     healthcheck:
-      test: [CMD, pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
