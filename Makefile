@@ -15,7 +15,10 @@ help:
 	@echo "  db-shell - Connect to the database shell"
 	@echo "  help     - Show this help message"
 
-setup:
+.env:
+	@cp example.env .env
+
+setup: .env
 	@echo "Setting up the project..."
 	@echo "Starting PostgreSQL database..."
 	@docker-compose --profile db up -d

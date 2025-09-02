@@ -21,7 +21,11 @@
 #### Make
 
 ```
-make start
+make setup
+```
+
+```
+make run
 ```
 
 ```
