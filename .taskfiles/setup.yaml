@@ -10,7 +10,7 @@ tasks:
       - task: create-env-file
       - task: direnv
       - task: lefthook
-      - task: gobin
+      # - task: gobin
 
   mise:
     desc: Install workstation dependencies

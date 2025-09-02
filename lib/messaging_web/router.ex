@@ -2,11 +2,7 @@ defmodule MessagingWeb.Router do
   use Plug.Router
 
   alias MessagingWeb.Controllers.Message
-  alias MessagingWeb.Controllers.MockTwilio
   alias MessagingWeb.Controllers.Twilio
-
-  plug :match
-  plug :dispatch
 
   plug Plug.Parsers,
     parsers: [:urlencoded, :json],
@@ -15,6 +11,9 @@ defmodule MessagingWeb.Router do
     length: 1_000_000,
     read_length: 1_000_000,
     read_timeout: 15_000
+
+  plug :match
+  plug :dispatch
 
   get "/_health" do
     send_resp(conn, 204, "")
@@ -29,14 +28,14 @@ defmodule MessagingWeb.Router do
   end
 
   # Main messaging API
-  get "/v1/messages", do: Message.list(conn)
-  post "/v1/messages", do: Message.create(conn)
+  post "/api/messages", do: Message.create(conn)
+  post "/api/messages/:type", do: Message.create(conn)
+  get "/api/conversations", do: Message.list_conversations(conn)
+  get "/api/conversations/:conversation_id/messages", do: Message.list_conversation_messages(conn)
 
   # Webhooks
-  post "/v1/webhooks/twilio", do: Twilio.webhook(conn)
-
-  # Mock API for testing inbound messages
-  post "/mock/twilio/messages", do: MockTwilio.send_message(conn)
+  post "/api/webhooks/sms", do: Twilio.sms_webhook(conn)
+  post "/api/webhooks/email", do: Twilio.email_webhook(conn)
 
   match _ do
     send_resp(conn, 404, "not found")

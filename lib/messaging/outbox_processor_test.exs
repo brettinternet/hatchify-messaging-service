@@ -1,5 +1,5 @@
 defmodule Messaging.OutboxProcessorTest do
-  use ExUnit.Case, async: false
+  use Messaging.DataCase
 
   import Ecto.Query
 
@@ -9,7 +9,6 @@ defmodule Messaging.OutboxProcessorTest do
   alias Messaging.Repo
 
   setup :verify_on_exit!
-  setup :set_mox_from_context
 
   describe "OutboxProcessor" do
     setup do

@@ -13,51 +13,40 @@ defmodule Messaging.Messages do
   - SMS/MMS: uses `messaging_provider_id`
   - Email: uses `xillio_id`
   """
-  @spec validate_message(map() | nil) :: {:ok, Message.t()} | {:error, atom()}
+  @spec validate_message(nil) :: {:error, atom()}
   def validate_message(nil), do: {:error, :missing_body}
 
+  @spec validate_message(map()) :: {:ok, Message.t()} | {:error, atom()}
   def validate_message(payload) when is_map(payload) do
     # Transform provider-specific fields to common schema
     attrs = transform_payload(payload)
 
-    # Create changeset and validate
-    changeset = Message.changeset(%Message{}, attrs)
-
-    if changeset.valid? do
-      {:ok, Ecto.Changeset.apply_changes(changeset)}
-    else
-      {:error, :invalid_message}
+    # Validate required fields manually to avoid changeset complexity
+    case validate_required_fields(attrs) do
+      :ok ->
+        {:ok, struct(Message, attrs)}
+      
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
+  @spec validate_message(any()) :: {:error, atom()}
   def validate_message(_), do: {:error, :invalid_format}
 
-  # Generate a conversation ID based on participants
-  # This is a placeholder - the real implementation should find or create conversation
-  defp generate_conversation_id(payload) do
-    from = get_from_address(payload)
-    to = get_to_address(payload)
-
-    case {from, to} do
-      {nil, _} ->
-        "conv-" <> UXID.generate!()
-
-      {_, nil} ->
-        "conv-" <> UXID.generate!()
-
-      {from_addr, to_addr} ->
-        # Create deterministic conversation ID from sorted participants
-        participants = Enum.sort([from_addr, to_addr])
-
-        "conv-" <>
-          (:md5 |> :crypto.hash(Enum.join(participants, ":")) |> Base.encode16(case: :lower) |> String.slice(0, 12))
+  # Validate required fields manually
+  defp validate_required_fields(attrs) do
+    required_fields = [:from_address, :to_address, :message_type, :body, :direction, :timestamp]
+    
+    case Enum.find(required_fields, fn field -> is_nil(Map.get(attrs, field)) end) do
+      nil -> :ok
+      _missing_field -> {:error, :invalid_message}
     end
   end
 
   # Transform different provider formats into our internal schema
   defp transform_payload(payload) do
     %{
-      conversation_id: generate_conversation_id(payload),
       from_address: get_from_address(payload),
       to_address: get_to_address(payload),
       message_type: get_message_type(payload),

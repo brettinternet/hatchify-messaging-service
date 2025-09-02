@@ -44,6 +44,95 @@ defmodule Messaging.Conversations do
     end
   end
 
+  @doc """
+  List conversations with optional search parameters.
+  Supports filtering by participant addresses (to/from).
+  """
+  @spec list_conversations(map()) :: [
+          %{conversation: Conversation.t(), participants: [String.t()], message_count: integer()}
+        ]
+  def list_conversations(params \\ %{}) do
+    # First get the conversation IDs that match our filter criteria
+    filtered_conversation_ids = get_filtered_conversation_ids(params)
+
+    # Then get full conversation details for those IDs
+    query =
+      from c in Conversation,
+        join: p in Participant,
+        on: c.id == p.conversation_id,
+        left_join: m in Message,
+        on: c.id == m.conversation_id,
+        where: c.id in ^filtered_conversation_ids,
+        group_by: c.id,
+        select: %{
+          conversation: c,
+          participants: fragment("array_agg(DISTINCT ?)", p.address),
+          message_count: count(m.id, :distinct)
+        },
+        order_by: [desc: c.inserted_at]
+
+    query
+    |> limit_results(params["limit"])
+    |> Repo.all()
+  end
+
+  # Get conversation IDs that match filter criteria
+  defp get_filtered_conversation_ids(params) do
+    base_query =
+      from c in Conversation, join: p in Participant, on: c.id == p.conversation_id, select: c.id, distinct: true
+
+    query = apply_conversation_filters_for_ids(base_query, params)
+    Repo.all(query)
+  end
+
+  @doc """
+  List messages for a specific conversation with outbox status.
+  """
+  @spec list_conversation_messages(String.t()) :: [%{message: Message.t(), outbox_sent: boolean()}]
+  def list_conversation_messages(conversation_id) do
+    Repo.all(
+      from(m in Message,
+        where: m.conversation_id == ^conversation_id,
+        left_join: o in OutboxEvent,
+        on: o.message_id == m.id,
+        select: %{message: m, outbox_sent: not is_nil(o.processed_at)},
+        order_by: [asc: m.timestamp]
+      )
+    )
+  end
+
+  # Apply filters for getting conversation IDs (no limit)
+  defp apply_conversation_filters_for_ids(query, params) do
+    query
+    |> filter_by_participant(params["from"])
+    |> filter_by_participant(params["to"])
+  end
+
+  defp filter_by_participant(query, nil), do: query
+
+  defp filter_by_participant(query, address) when is_binary(address) do
+    from [c, p] in query,
+      where: p.address == ^address
+  end
+
+  defp limit_results(query, nil), do: query
+
+  defp limit_results(query, limit_str) when is_binary(limit_str) do
+    case Integer.parse(limit_str) do
+      {limit, _} when limit > 0 and limit <= 100 ->
+        from q in query, limit: ^limit
+
+      _ ->
+        query
+    end
+  end
+
+  defp limit_results(query, limit) when is_integer(limit) and limit > 0 and limit <= 100 do
+    from q in query, limit: ^limit
+  end
+
+  defp limit_results(query, _), do: query
+
   @spec find_or_create_conversation(Ecto.Repo.t(), Message.t()) :: {:ok, Conversation.t()} | {:error, any()}
   defp find_or_create_conversation(repo, %Message{} = message) do
     addresses = Participant.addresses_from_message(message)

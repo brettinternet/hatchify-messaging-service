@@ -12,11 +12,62 @@ defmodule MessagingWeb.Controllers.Message do
   require Logger
 
   @doc """
-  List messages from a conversation.
+  List conversations with optional search parameters.
+  Supports query parameters: from, to, limit
   """
-  @spec list(Plug.Conn.t()) :: Plug.Conn.t()
-  def list(%Plug.Conn{} = conn) do
-    send_resp(conn, 200, "Listing messages is not implemented yet")
+  @spec list_conversations(Plug.Conn.t()) :: Plug.Conn.t()
+  def list_conversations(%Plug.Conn{} = conn) do
+    params = conn.query_params
+
+    conversations = Conversations.list_conversations(params)
+
+    response = %{
+      conversations:
+        Enum.map(conversations, fn %{conversation: conv, participants: participants, message_count: count} ->
+          %{
+            id: conv.id,
+            participants: participants,
+            message_count: count,
+            inserted_at: conv.inserted_at
+          }
+        end)
+    }
+
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(200, Jason.encode!(response))
+  end
+
+  @doc """
+  List messages for a specific conversation with outbox status.
+  """
+  @spec list_conversation_messages(Plug.Conn.t()) :: Plug.Conn.t()
+  def list_conversation_messages(%Plug.Conn{} = conn) do
+    conversation_id = conn.path_params["conversation_id"]
+    messages = Conversations.list_conversation_messages(conversation_id)
+
+    response = %{
+      conversation_id: conversation_id,
+      messages:
+        Enum.map(messages, fn %{message: msg, outbox_sent: sent} ->
+          %{
+            id: msg.id,
+            from_address: msg.from_address,
+            to_address: msg.to_address,
+            message_type: msg.message_type,
+            body: msg.body,
+            attachments: msg.attachments,
+            direction: msg.direction,
+            timestamp: msg.timestamp,
+            outbox_sent: sent,
+            inserted_at: msg.inserted_at
+          }
+        end)
+    }
+
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(200, Jason.encode!(response))
   end
 
   @doc """

@@ -47,7 +47,7 @@ defmodule Messaging.Conversations.Message do
 
   @doc false
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
-  def changeset(message, attrs) do
+  def changeset(%__MODULE__{} = message, attrs) do
     message
     |> cast(attrs, [
       :conversation_id,

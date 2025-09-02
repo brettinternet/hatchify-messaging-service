@@ -8,4 +8,6 @@ ENV=${ENVIRONMENT:-development}
 echo "Environment: ${ENV}"
 echo "Port: ${SERVER_PORT:-8080}"
 
-iex -S mix
+mix run --no-halt &
+
+echo "Application started successfully!"

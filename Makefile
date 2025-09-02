@@ -1,9 +1,10 @@
-.PHONY: setup run test clean help db-up db-down db-logs db-shell
+.PHONY: setup start run kill test clean help db-up db-down db-logs db-shell
 
 help:
 	@echo "Available commands:"
 	@echo "  setup    - Set up the project environment and start database"
 	@echo "  run      - Run the application"
+	@echo "  kill     - Kill service running on the server port"
 	@echo "  test     - Run tests"
 	@echo "  clean    - Clean up temporary files and stop containers"
 	@echo "  db-up    - Start the PostgreSQL database"
@@ -23,6 +24,11 @@ setup:
 run:
 	@echo "Running the application..."
 	@./bin/start.sh
+
+start: run
+
+kill:
+	@lsof -t -i tcp:$${SERVER_PORT:-8080} | xargs kill
 
 test:
 	@echo "Running tests..."
