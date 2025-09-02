@@ -4,7 +4,6 @@ defmodule Messaging.OutboxProcessorTest do
 
   import Ecto.Query
 
-  alias Ecto.Adapters.SQL
   alias Messaging.Conversations.Conversation
   alias Messaging.Conversations.Message
   alias Messaging.Conversations.OutboxEvent
@@ -75,56 +74,6 @@ defmodule Messaging.OutboxProcessorTest do
       updated_message = Repo.get!(Message, message.id)
       assert updated_message.status == :sent
       assert updated_message.provider_id == "provider_12345"
-
-      # Clean up
-      GenServer.stop(pid)
-    end
-
-    @tag skip: "Foreign key constraint makes this test complex - skip for now"
-    test "handles message not found error" do
-      # Create a conversation and message first
-      conversation = create_test_conversation("conv_not_found")
-
-      message =
-        Repo.insert!(%Message{
-          id: "msg_not_found",
-          conversation_id: conversation.id,
-          from_address: "+1234567890",
-          to_address: "+0987654321",
-          message_type: "sms",
-          body: "Test message",
-          direction: "outbound",
-          timestamp: DateTime.utc_now()
-        })
-
-      # Create an outbox event for the message
-      event =
-        Repo.insert!(%OutboxEvent{
-          id: "outev_test456",
-          event_type: "message.send",
-          message_id: message.id,
-          scheduled_for: DateTime.utc_now()
-        })
-
-      # Temporarily disable foreign key constraints and update the outbox event
-      SQL.query!(Repo, "SET session_replication_role = replica")
-      SQL.query!(Repo, "UPDATE outbox_event SET message_id = 'msg_does_not_exist' WHERE id = 'outev_test456'")
-      SQL.query!(Repo, "SET session_replication_role = DEFAULT")
-
-      # Start the processor temporarily
-      {:ok, pid} = OutboxProcessor.start_link([])
-
-      # Send process_events message manually
-      send(pid, :process_events)
-
-      # Wait for processing
-      Process.sleep(100)
-
-      # Verify event was retried (not processed)
-      retried_event = Repo.get!(OutboxEvent, event.id)
-      assert retried_event.processed_at == nil
-      assert retried_event.retry_count == 1
-      assert retried_event.error_message =~ ":message_not_found"
 
       # Clean up
       GenServer.stop(pid)

@@ -3,18 +3,9 @@ defmodule MessagingWeb.RouterTest do
 
   import Plug.Test
 
-  describe "GET /_health" do
-    test "returns no content" do
-      conn = conn(:get, "/_health")
-      conn = MessagingWeb.Router.call(conn, [])
-      assert conn.state == :sent
-      assert conn.status == 204
-    end
-  end
-
-  describe "GET /status" do
+  describe "GET /" do
     test "returns ok" do
-      conn = conn(:get, "/status")
+      conn = conn(:get, "/")
       conn = MessagingWeb.Router.call(conn, [])
       assert conn.state == :sent
       assert conn.status == 200
@@ -22,9 +13,18 @@ defmodule MessagingWeb.RouterTest do
     end
   end
 
+  describe "GET /health" do
+    test "returns no content" do
+      conn = conn(:get, "/health")
+      conn = MessagingWeb.Router.call(conn, [])
+      assert conn.state == :sent
+      assert conn.status == 204
+    end
+  end
+
   describe "404" do
     test "not found" do
-      conn = conn(:get, "/")
+      conn = conn(:get, "/not-found")
       conn = MessagingWeb.Router.call(conn, [])
       assert conn.state == :sent
       assert conn.status == 404

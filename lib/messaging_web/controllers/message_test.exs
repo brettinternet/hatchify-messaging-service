@@ -2,7 +2,6 @@ defmodule MessagingWeb.Controllers.MessageTest do
   use Messaging.DataCase
   use Mimic
 
-  import Plug.Conn
   import Plug.Test
 
   alias Messaging.Conversations
@@ -19,7 +18,7 @@ defmodule MessagingWeb.Controllers.MessageTest do
   setup :verify_on_exit!
 
   # Helper function to create a mock Plug.Conn
-  defp mock_conn(body_params \\ %{}, query_params \\ %{}) do
+  defp mock_conn(body_params, query_params \\ %{}) do
     :post
     |> conn("/", "")
     |> Map.put(:body_params, body_params)
