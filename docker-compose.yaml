@@ -45,11 +45,12 @@ services:
       dockerfile: docker/messaging/Dockerfile
     deploy:
       <<: *deploy
-      replicas: 2
+      replicas: 1
     environment:
       <<: *environment
       SERVER_PORT: &messaging-port ${SERVER_PORT:-8080}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      POSTGRES_DB: ${POSTGRES_DB:-messaging_service}
       POSTGRES_HOST: postgres
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -94,8 +95,6 @@ services:
 
   pgadmin:
     <<: *options
-    depends_on:
-      - postgres
     image: dpage/pgadmin4:latest
     profiles: [services]
     environment:

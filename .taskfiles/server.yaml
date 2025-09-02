@@ -15,7 +15,7 @@ tasks:
     desc: Setup server
     cmds:
       - docker-compose pull
-      - task: compose:services
+      - task: compose:db
       - mix setup
 
   start:
@@ -25,7 +25,7 @@ tasks:
         sh: LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 10; echo
       RELEASE_COOKIE: messaging
     deps:
-      - compose:services
+      - compose:db
     cmd: iex -S mix
 
   kill:
@@ -90,9 +90,15 @@ tasks:
   compose:services:
     aliases: [compose:services:up]
     desc: Start services
+    deps:
+      - compose:db
     cmd: docker-compose --profile services up -d{{if .CLI_FORCE}} --force-recreate{{end}}
+
+  compose:db:
+    desc: Start database
+    cmd: docker-compose --profile db up -d{{if .CLI_FORCE}} --force-recreate{{end}}
 
   compose:services:down:
     desc: Start services
     cmds:
-      - docker-compose --profile services down
+      - docker-compose --profile services --profile db down

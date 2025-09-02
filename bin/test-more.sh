@@ -3,10 +3,12 @@
 # Extended test script for messaging service endpoints
 # This script provides comprehensive testing of the messaging service with edge cases and scenarios
 
-BASE_URL="http://localhost:${SERVER_PORT:-8080}"
+BASE_URL="${SERVER_URL:-"http://localhost:${SERVER_PORT:-8080}"}"
 CONTENT_TYPE="Content-Type: application/json"
 FAILED_TESTS=0
 TOTAL_TESTS=0
+
+echo "Using base URL: $BASE_URL"
 
 # Color codes for output
 RED='\033[0;31m'
@@ -32,9 +34,9 @@ run_test() {
     local actual_status=$(echo "$response" | grep -o "Status: [0-9]*" | grep -o "[0-9]*")
 
     if [ "$actual_status" = "$expected_status" ]; then
-        echo -e "${GREEN} PASS - Expected status $expected_status${NC}"
+        echo -e "${GREEN} PASS - Expected status $expected_status${NC}"
     else
-        echo -e "${RED} FAIL - Expected status $expected_status, got $actual_status${NC}"
+        echo -e "${RED} FAIL - Expected status $expected_status, got $actual_status${NC}"
         FAILED_TESTS=$((FAILED_TESTS + 1))
     fi
     echo
@@ -308,7 +310,7 @@ run_test "SMS with Unicode content" "204" "curl -s -X POST '$BASE_URL/api/messag
     \"from\": \"+12016661234\",
     \"to\": \"+18045551234\",
     \"type\": \"sms\",
-    \"body\": \"Hello! < Unicode test with emojis 😎
+    \"body\": \"Hello! < Unicode test with emojis 😎
  and special chars: ��������\",
     \"timestamp\": \"2024-11-01T14:00:00Z\"
   }' \
