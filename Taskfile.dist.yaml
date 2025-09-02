@@ -37,6 +37,7 @@ tasks:
       # - task: integration:check
     cmds:
       - dprint check
+      - gitleaks git --redact --verbose --no-banner
 
   fix:
     desc: Run all fixes

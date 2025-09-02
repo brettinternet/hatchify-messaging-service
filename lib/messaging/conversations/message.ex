@@ -21,6 +21,7 @@ defmodule Messaging.Conversations.Message do
           attachments: [String.t()] | nil,
           provider_id: String.t() | nil,
           direction: String.t(),
+          status: atom() | nil,
           timestamp: DateTime.t(),
           conversation: Conversation.t() | Ecto.Association.NotLoaded.t(),
           inserted_at: DateTime.t()
@@ -28,6 +29,7 @@ defmodule Messaging.Conversations.Message do
 
   @message_types ~w(sms mms email)
   @directions ~w(inbound outbound)
+  @statuses ~w(pending sent failed delivered)a
 
   schema "message" do
     field :from_address, :string
@@ -37,6 +39,7 @@ defmodule Messaging.Conversations.Message do
     field :attachments, {:array, :string}
     field :provider_id, :string
     field :direction, :string
+    field :status, Ecto.Enum, values: @statuses, default: :pending
     field :timestamp, :utc_datetime_usec
 
     belongs_to :conversation, Conversation, references: :id
@@ -58,6 +61,7 @@ defmodule Messaging.Conversations.Message do
       :attachments,
       :provider_id,
       :direction,
+      :status,
       :timestamp
     ])
     |> validate_required([
@@ -75,6 +79,38 @@ defmodule Messaging.Conversations.Message do
     |> validate_inclusion(:direction, @directions)
     |> validate_attachments()
     |> unique_constraint([:provider_id, :message_type], name: :message_provider_id_message_type_index)
+  end
+
+  @doc """
+  Validation changeset for webhook payloads without conversation_id
+  """
+  @spec validate_changeset(t(), map()) :: Ecto.Changeset.t()
+  def validate_changeset(%__MODULE__{} = message, attrs) do
+    message
+    |> cast(attrs, [
+      :from_address,
+      :to_address,
+      :message_type,
+      :body,
+      :attachments,
+      :provider_id,
+      :direction,
+      :status,
+      :timestamp
+    ])
+    |> validate_required([
+      :from_address,
+      :to_address,
+      :message_type,
+      :body,
+      :direction,
+      :timestamp
+    ])
+    |> validate_length(:from_address, min: 1, max: 255)
+    |> validate_length(:to_address, min: 1, max: 255)
+    |> validate_inclusion(:message_type, @message_types)
+    |> validate_inclusion(:direction, @directions)
+    |> validate_attachments()
   end
 
   # Validate attachments array

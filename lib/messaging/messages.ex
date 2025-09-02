@@ -21,28 +21,20 @@ defmodule Messaging.Messages do
     # Transform provider-specific fields to common schema
     attrs = transform_payload(payload)
 
-    # Validate required fields manually to avoid changeset complexity
-    case validate_required_fields(attrs) do
-      :ok ->
-        {:ok, struct(Message, attrs)}
+    # Use Message validation changeset (doesn't require conversation_id)
+    changeset = Message.validate_changeset(%Message{}, attrs)
 
-      {:error, reason} ->
-        {:error, reason}
+    case changeset do
+      %{valid?: true} ->
+        {:ok, Ecto.Changeset.apply_changes(changeset)}
+
+      %{valid?: false} ->
+        {:error, :invalid_message}
     end
   end
 
   @spec validate_message(any()) :: {:error, atom()}
   def validate_message(_), do: {:error, :invalid_format}
-
-  # Validate required fields manually
-  defp validate_required_fields(attrs) do
-    required_fields = [:from_address, :to_address, :message_type, :body, :direction, :timestamp]
-
-    case Enum.find(required_fields, fn field -> is_nil(Map.get(attrs, field)) end) do
-      nil -> :ok
-      _missing_field -> {:error, :invalid_message}
-    end
-  end
 
   # Transform different provider formats into our internal schema
   defp transform_payload(payload) do
@@ -67,10 +59,11 @@ defmodule Messaging.Messages do
   defp get_to_address(_), do: nil
 
   # Extract email from formatted or return as-is
-  defp extract_email_from_markdown(value) do
+  @spec extract_email_from_markdown(binary()) :: binary()
+  defp extract_email_from_markdown(value) when is_binary(value) do
     case Regex.run(~r/\[(.+?)\]\(mailto:(.+?)\)/, value) do
-      [_full, _display, email] -> email
-      nil -> value
+      [_full, _display, email] when is_binary(email) -> email
+      _ -> value
     end
   end
 

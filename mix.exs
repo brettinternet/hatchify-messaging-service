@@ -11,6 +11,10 @@ defmodule Messaging.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       aliases: aliases(),
       deps: deps(),
+      dialyzer: [
+        ignore_warnings: ".dialyzer_ignore.exs",
+        flags: [:no_fail_call, :no_match]
+      ],
       test_paths: ["lib"],
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [

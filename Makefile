@@ -6,6 +6,8 @@ help:
 	@echo "  run      - Run the application"
 	@echo "  kill     - Kill service running on the server port"
 	@echo "  test     - Run tests"
+	@echo "  check    - Run checks"
+	@echo "  fix      - Run fixes"
 	@echo "  clean    - Clean up temporary files and stop containers"
 	@echo "  db-up    - Start the PostgreSQL database"
 	@echo "  db-down  - Stop the PostgreSQL database"
@@ -37,10 +39,22 @@ test:
 	@echo "Running test script..."
 	@./bin/test.sh
 
+check:
+	@echo "Running checks..."
+	@mix compile --warnings-as-errors
+	@mix dialyzer --quiet-with-result
+	@mix format --check-formatted
+	@mix credo --min-priority low
+	@mix sobelow --config .sobelow-conf --exit
+
+fix:
+	@echo "Running fixes..."
+	@mix format
+
 clean:
 	@echo "Cleaning up..."
 	@echo "Stopping and removing containers..."
-	@docker-compose down -v
+	@docker-compose --profile services down -v
 	@echo "Removing any temporary files..."
 	@rm -rf *.log *.tmp
 
@@ -58,4 +72,4 @@ db-logs:
 
 db-shell:
 	@echo "Connecting to database shell..."
-	@docker-compose exec postgres psql -U messaging_user -d messaging_service
+	@docker-compose --profile services exec postgres psql -U ${POSTGRES_USER:-messaging_user} -d ${POSTGRES_DB:-messaging_service}

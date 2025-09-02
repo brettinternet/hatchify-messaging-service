@@ -88,8 +88,8 @@ defmodule Messaging.MessagesTest do
       payload = Map.put(@valid_payload, "timestamp", "2024-11-01T14:00:00Z")
       {:ok, message} = Messages.validate_message(payload)
 
-      expected = "2024-11-01T14:00:00Z" |> DateTime.from_iso8601() |> elem(1)
-      assert message.timestamp == expected
+      expected = ~U[2024-11-01 14:00:00Z]
+      assert DateTime.compare(message.timestamp, expected) == :eq
     end
 
     test "converts timezone to UTC" do
@@ -98,8 +98,8 @@ defmodule Messaging.MessagesTest do
       {:ok, message} = Messages.validate_message(payload)
 
       # Should be converted to 14:00 UTC
-      expected = "2024-11-01T14:00:00Z" |> DateTime.from_iso8601() |> elem(1)
-      assert message.timestamp == expected
+      expected = ~U[2024-11-01 14:00:00Z]
+      assert DateTime.compare(message.timestamp, expected) == :eq
     end
 
     test "converts positive timezone offset to UTC" do
@@ -108,16 +108,16 @@ defmodule Messaging.MessagesTest do
       {:ok, message} = Messages.validate_message(payload)
 
       # Should be converted to 14:00 UTC
-      expected = "2024-11-01T14:00:00Z" |> DateTime.from_iso8601() |> elem(1)
-      assert message.timestamp == expected
+      expected = ~U[2024-11-01 14:00:00Z]
+      assert DateTime.compare(message.timestamp, expected) == :eq
     end
 
     test "assumes UTC for naive datetime (no timezone)" do
       payload = Map.put(@valid_payload, "timestamp", "2024-11-01T14:00:00")
       {:ok, message} = Messages.validate_message(payload)
 
-      expected = "2024-11-01T14:00:00Z" |> DateTime.from_iso8601() |> elem(1)
-      assert message.timestamp == expected
+      expected = ~U[2024-11-01 14:00:00Z]
+      assert DateTime.compare(message.timestamp, expected) == :eq
     end
 
     test "uses current time for invalid timestamp" do
