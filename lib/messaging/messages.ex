@@ -70,6 +70,12 @@ defmodule Messaging.Messages do
   # Determine message type based on payload
   defp get_message_type(%{"type" => type}) when type in ["sms", "mms"], do: type
   defp get_message_type(%{"xillio_id" => _}), do: "email"
+
+  defp get_message_type(%{"from" => from}) do
+    extracted_email = extract_email_from_markdown(from)
+    if String.contains?(extracted_email, "@"), do: "email"
+  end
+
   defp get_message_type(_), do: nil
 
   # Get provider ID from different provider formats

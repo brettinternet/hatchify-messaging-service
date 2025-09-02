@@ -12,4 +12,4 @@ config :logger,
   level: :debug,
   default_handler: [formatter: {LoggerJSON.Formatters.Basic, []}]
 
-config :messaging, :server_port, 3085
+config :messaging, :server_port, 8080

@@ -73,7 +73,7 @@ services:
   postgres:
     <<: *options
     image: postgres:17-alpine
-    profiles: [services]
+    profiles: [db]
     environment:
       <<: *environment
       POSTGRES_DB: postgres

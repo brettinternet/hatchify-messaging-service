@@ -18,9 +18,10 @@ help:
 setup:
 	@echo "Setting up the project..."
 	@echo "Starting PostgreSQL database..."
-	@docker-compose --profile services up -d
+	@docker-compose --profile db up -d
 	@echo "Waiting for database to be ready..."
 	@sleep 5
+	@mix setup
 	@echo "Setup complete!"
 
 run:
@@ -35,9 +36,16 @@ kill:
 test:
 	@echo "Running tests..."
 	@echo "Starting test database if not running..."
-	@docker-compose --profile services up -d
+	@docker-compose --profile db up -d
 	@echo "Running test script..."
 	@./bin/test.sh
+
+test-more:
+	@echo "Running tests..."
+	@echo "Starting test database if not running..."
+	@docker-compose --profile db up -d
+	@echo "Running test script..."
+	@./bin/test-more.sh
 
 check:
 	@echo "Running checks..."
@@ -51,25 +59,25 @@ fix:
 	@echo "Running fixes..."
 	@mix format
 
-clean:
+clean: kill
 	@echo "Cleaning up..."
 	@echo "Stopping and removing containers..."
-	@docker-compose --profile services down -v
+	@docker-compose --profile db down -v
 	@echo "Removing any temporary files..."
 	@rm -rf *.log *.tmp
 
 db-up:
 	@echo "Starting PostgreSQL database..."
-	@docker-compose --profile services up -d
+	@docker-compose --profile db up -d
 
 db-down:
 	@echo "Stopping PostgreSQL database..."
-	@docker-compose --profile services down
+	@docker-compose --profile db down
 
 db-logs:
 	@echo "Showing database logs..."
-	@docker-compose --profile services logs -f postgres
+	@docker-compose --profile db logs -f postgres
 
 db-shell:
 	@echo "Connecting to database shell..."
-	@docker-compose --profile services exec postgres psql -U ${POSTGRES_USER:-messaging_user} -d ${POSTGRES_DB:-messaging_service}
+	@docker-compose --profile db exec postgres psql -U ${POSTGRES_USER:-messaging_user} -d ${POSTGRES_DB:-messaging_service}

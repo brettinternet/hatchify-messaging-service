@@ -8,7 +8,7 @@ defmodule Messaging do
 
   @spec server_port() :: integer()
   def server_port do
-    Application.get_env(:messaging, :server_port, 3085)
+    Application.get_env(:messaging, :server_port, 8080)
   end
 
   @spec config_env() :: atom()
