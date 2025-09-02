@@ -5,14 +5,30 @@
 - my preferred devex: mise, Taskfile, docker, .env/direnv, lefthook, and single-command entrypoints
 - integration tests
 - Elixir API service
+- List conversations by addresses
+- Send message to provider
+- Handle webook from messaging provider
 
 ## TODO
 
 - [ ] rename service from `messaging` 🥱
+- [ ] normalize participants
 
 ## Usage
 
 ### Setup
+
+#### Make
+
+```
+make start
+```
+
+```
+make test
+```
+
+#### Task & Docker
 
 [Install `mise`](https://mise.jdx.dev/getting-started.html) to manage system dependencies for the project. Be sure to activate mise in your shell.
 
@@ -23,14 +39,14 @@ Initialize and setup dependencies:
 task init
 ```
 
-#### DNS
+##### DNS
 
 Replace `${DOMAIN}` in `.env` with the value of the local domain, such as `usehatch.arpa`.
 
 <details>
 <summary>Setup local DNS for ${DOMAIN} to point to 127.0.0.1.</summary>
 
-##### dnsmasq
+###### dnsmasq
 
 Install `dnsmasq`.
 
