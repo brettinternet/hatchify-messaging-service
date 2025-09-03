@@ -1,0 +1,45 @@
+# Env vars
+.env
+
+# Container
+docker/data
+docker/messaging/secrets
+
+# Tools
+/Taskfile.yaml
+/Taskfile.yml
+mise.local.toml
+mise.*.local.toml
+
+# AI
+.claude/settings.local.json
+.opencode/
+CLAUDE.local.md
+GEMINI.local.md
+.serena
+
+# Logs
+logs
+*.log
+*.log*
+dump
+
+# System
+.DS_Store
+
+# Elixir
+.elixir_ls
+.elixir-tools
+/_build/
+/cover/
+/deps/
+/doc/
+/.fetch
+erl_crash.dump
+*.ez
+messaging-*.tar
+/tmp/
+
+# Go
+/integration/cmd/*/build
+/integration/cmd/*/tmp

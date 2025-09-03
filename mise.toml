@@ -1,0 +1,14 @@
+[tools]
+bun = "latest"
+direnv = "latest"
+dotenv = "latest"
+dprint = "latest"
+erlang = "27.3.4"
+elixir = "1.18.3-otp-27"
+gitleaks = "latest"
+go = "latest"
+lefthook = "latest"
+task = "latest"
+
+[settings]
+disable_backends = ["asdf"]

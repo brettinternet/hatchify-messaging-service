@@ -1,0 +1,14 @@
+[
+  verbose: true,
+  private: false,
+  skip: true,
+  router: "lib/messaging_web/router.ex",
+  exit: "low",
+  format: "txt",
+  compact: true,
+  out: "",
+  threshold: "low",
+  ignore: ["Config.HTTPS", "XSS.SendResp"],
+  ignore_files: [],
+  quiet: true,
+]

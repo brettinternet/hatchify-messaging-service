@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# psql vars: https://www.postgresql.org/docs/current/libpq-envars.html
+export PGHOST="${POSTGRES_HOST:-postgres}"
+export PGPORT="${POSTGRES_PORT:-5432}"
+export PGUSER="${POSTGRES_USER:-postgres}"
+export PGDATABASE="${POSTGRES_DB:-messaging}"
+export PGPASSWORD="${POSTGRES_PASSWORD:-postgres}"
+
+while ! pg_isready -q -h $PGHOST -p $PGPORT -U $PGUSER
+do
+  echo "[$(date)] Waiting for user '$PGUSER' with database '$PGDATABASE' at '$PGHOST:$PGPORT' to start…"
+  sleep 2
+done
+
+./bin/migrate
+
+CLUSTER_MODE="${CLUSTER_MODE:-false}"
+
+if [ "$CLUSTER_MODE" = "true" ]; then
+  export RELEASE_NAME="${RELEASE_NAME:-messaging@$HOSTNAME}"
+  export RELEASE_COOKIE="${RELEASE_COOKIE:-"messaging"}"
+  export RELEASE_DISTRIBUTION="${RELEASE_DISTRIBUTION:-name}"
+  echo "Starting node '$RELEASE_NAME' in cluster mode"
+fi
+
+exec ./bin/messaging "$@"
